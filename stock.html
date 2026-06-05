@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>石頭哥股票雷達｜咖啡色分析指令</title>
+<style>
+  :root {
+    --bg: #1a120b;
+    --card: #2c1810;
+    --card-light: #3e2723;
+    --text: #f5f5dc;
+    --text-muted: #bcaaa4;
+    --accent: #d4a574;
+    --accent-light: #e6c9a8;
+    --border: #4e342e;
+    --border-light: #6d4c41;
+    --danger: #c0392b;
+    --danger-bg: rgba(192, 57, 43, 0.12);
+    --success: #27ae60;
+    --warning: #f39c12;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding-bottom: 40px;
+  }
+  header {
+    background: linear-gradient(180deg, #2c1810 0%, #1a120b 100%);
+    padding: 36px 24px 28px;
+    text-align: center;
+    border-bottom: 2px solid var(--accent);
+  }
+  header h1 { font-size: 1.75rem; font-weight: 800; color: var(--accent); margin-bottom: 6px; letter-spacing: 1px; }
+  header p { font-size: 0.95rem; color: var(--text-muted); }
+  .container { max-width: 480px; margin: 0 auto; padding: 22px; }
+
+  /* 風險警示區 */
+  .risk-box {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .risk-box .risk-title {
+    color: var(--danger);
+    font-weight: 800;
+    font-size: 1.35rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .risk-box .risk-text {
+    font-size: 0.92rem;
+    color: #e8a0a0;
+    line-height: 1.7;
+  }
+  .risk-box .risk-text strong { color: #fff; }
+
+  /* 使用說明 */
+  .howto-box {
+    background: var(--card-light);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-light);
+  }
+  .howto-box p { font-size: 0.98rem; color: var(--text-muted); line-height: 1.6; }
+  .howto-box .stock-input {
+    background: rgba(212, 165, 116, 0.15);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 4px 10px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  /* Tab */
+  .tab-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 12px 22px;
+    border-radius: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    color: var(--text-muted);
+  }
+  .tab.active {
+    background: var(--accent);
+    color: #1a120b;
+    border-color: var(--accent);
+  }
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .card-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    background: rgba(212, 165, 116, 0.12);
+  }
+  .card-title-area { flex: 1; }
+  .card-title { font-size: 1.35rem; font-weight: 800; color: var(--accent-light); margin-bottom: 2px; }
+  .card-subtitle { font-size: 0.88rem; color: var(--text-muted); }
+  .card-desc {
+    font-size: 0.98rem;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  /* 輸出預覽 */
+  .output-preview {
+    background: rgba(212, 165, 116, 0.06);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    border-left: 3px solid var(--accent);
+    line-height: 1.7;
+  }
+  .output-preview strong { color: var(--accent-light); }
+
+  /* Prompt Box */
+  .prompt-box {
+    background: #0f0a06;
+    border-radius: 12px;
+    padding: 22px;
+    font-size: 0.98rem;
+    color: #e8dcc8;
+    line-height: 1.8;
+    position: relative;
+    border: 1px solid var(--border);
+    word-break: break-word;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--accent);
+    color: #1a120b;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:active { transform: scale(0.95); }
+  .copy-btn.copied { background: var(--success); color: white; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    font-size: 0.92rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-right: 6px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  .tag.buy { background: rgba(39, 174, 96, 0.15); color: #58d68d; }
+  .tag.wait { background: rgba(243, 156, 18, 0.15); color: #f8c471; }
+  .tag.sell { background: rgba(192, 57, 43, 0.15); color: #ec7063; }
+  .tag.module { background: rgba(212, 165, 116, 0.15); color: var(--accent); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 34px 24px;
+    color: var(--text-muted);
+    font-size: 1rem;
+  }
+  .footer .divider {
+    width: 40px;
+    height: 1px;
+    background: var(--border-light);
+    margin: 10px auto;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--accent);
+    color: #1a120b;
+    padding: 16px 32px;
+    border-radius: 10px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 200;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* 模組對照表 */
+  .module-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin-top: 12px;
+  }
+  .module-table th {
+    background: var(--card-light);
+    color: var(--accent);
+    padding: 8px 6px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .module-table tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>☕ 財神到模擬雷達</h1>
+  <p>論文個案研究｜複製貼上 → 知道能不能買</p>
+</header>
+
+<div class="container">
+
+  <!-- 風險警示 -->
+  <div class="risk-box">
+    <div class="risk-title">⚠️ 投資風險聲明</div>
+    <div class="risk-text">
+      本頁面所有提示詞產生的分析結果<strong>僅供參考，不構成投資建議</strong>。<br><br>
+      • ChatGPT 資料可能過期、錯誤或缺少即時股價<br>
+      • 「異常檢測」是統計方法，<strong>不是預言</strong>。外資昨天大買，不代表明天不會大賣<br>
+      • 歷史異常不代表未來會漲，<strong>虧損自負</strong><br><br>
+      下單前請務必確認即時行情，並諮詢專業投資顧問。
+    </div>
+  </div>
+
+  <!-- 使用說明 -->
+  <div class="howto-box">
+    <p>
+      <strong style="color:var(--accent-light);">使用方式：</strong>點擊「複製」→ 貼到 ChatGPT → 把 <span class="stock-input">【2449】</span> 換成代號 → 直接看結論「買或不買」<br><br>
+      <strong style="color:var(--accent-light);">對應模組：</strong>每組提示詞都對應石頭哥的 Python 分析模組（見下方對照表）
+    </p>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('radar')">🎯 買點雷達</div>
+    <div class="tab" onclick="switchTab('compare')">⚔️ 同業對決</div>
+    <div class="tab" onclick="switchTab('event')">📅 事件獵殺</div>
+    <div class="tab" onclick="switchTab('module')">📋 模組對照</div>
+  </div>
+
+  <!-- 買點雷達 -->
+  <div id="radar" class="section active">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🎯</div>
+        <div class="card-title-area">
+          <div class="card-title">外資有沒有偷偷買？</div>
+          <div class="card-subtitle">三段式固定基期法｜抓被掩蓋的異常買超</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        <span class="tag buy">買點訊號</span>
+        <span class="tag module">institutional_investors.py</span><br>
+        外資如果「先賣壓低均值、再大買」，傳統方法會漏掉。這組用石頭哥驗證過的三段式法，抓出被掩蓋的異常買超。
+      </div>
+      <div class="output-preview">
+        📤 預期輸出：<strong>「5/15 外資單日買超 15,570 張，z-score=3.95（極端異常）。前 30 天有 22 天在賣，均值被壓低。這是『先賣後買』的佈局訊號。→ 建議：跟進買入」</strong>
+      </div>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copy(this)">複製</button>
+        請對【2449】做「三段式固定基期外資異常分析」：
+        1. 取最近 44 個交易日，分三段：基期（第1-15天）、操縱期（第16-30天）、目標期（第31-44天）
+        2. 用基期的均值和標準差當固定基準，計算每一天的 z-score
+        3. 找出 |z|>2 的異常交易日，標註是買超還是賣超
+        4. 特別檢查：目標期有沒有「大買超」但傳統滾動 z-score 會漏掉的日期
+        5. 最後給我一個明確結論：「買入」、「觀望」或「不買」，並說明理由
+        6. 結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📈</div>
+        <div class="card-title-area">
+          <div class="card-title">這檔現在能進場嗎？</div>
+          <div class="card-subtitle">綜合籌碼快篩｜外資 + 投信 + 股價位置</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        <span class="tag wait">進場訊號</span>
+        <span class="tag module">institutional_investors.py + event_study_core.py</span><br>
+        最簡單的綜合判斷。三個條件同時看，直接告訴你能不能按買進。
+      </div>
+      <div class="output-preview">
+        📤 預期輸出：<strong>「外資連續 5 天買超，投信也加碼，股價在月線之上。→ 建議：買入，目標價 XX 元」</strong>
+      </div>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copy(this)">複製</button>
+        請分析【2449】現在是否適合進場。只看三個條件：
+        1. 最近 10 天外資買賣超：是買還是賣？平均每天多少張？
+        2. 最近 10 天投信買賣超：是買還是賣？
+        3. 現在股價在 5 日線、10 日線、月線的上方還是下方？
+        最後給我一個明確結論：「現在買進」、「等拉回再買」或「不要買」，並說明理由。不需要解釋技術指標，只要結論。
+        結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🚨</div>
+        <div class="card-title-area">
+          <div class="card-title">外資是不是在倒貨？</div>
+          <div class="card-subtitle">逃命訊號檢測｜三段式抓異常大賣</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        <span class="tag sell">逃命訊號</span>
+        <span class="tag module">institutional_investors.py</span><br>
+        反過來用：如果外資連續異常大賣，可能是內部知道利空。這組用來決定「要不要賣」或「絕對不要進場」。
+      </div>
+      <div class="output-preview">
+        📤 預期輸出：<strong>「連續 7 天異常賣超，z-score 最低 -3.2。外資在出貨。→ 建議：持有者可考慮減碼，未持有者絕對不要進場」</strong>
+      </div>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copy(this)">複製</button>
+        請分析【2449】最近有沒有「外資異常大賣」的逃命訊號。用三段式固定基期法：
+        1. 找出最近兩個月外資賣超 z-score < -2 的異常日
+        2. 統計連續異常賣超的天數
+        3. 檢查異常賣超前後股價有沒有大跌
+        最後給我結論：「持有者可減碼」、「觀望」或「沒有逃命訊號」，只要結論不需要解釋。
+        結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 同業對決 -->
+  <div   <div id="compare" class="section">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">⚔️</div>
+        <div class="card-title-area">
+          <div class="card-title">封測三雄誰被外資買最多？</div>
+          <div class="card-subtitle">2449 vs 3711 vs 6239｜同業批次分析</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        <span class="tag buy">選股訊號</span>
+        <span class="tag module">institutional_investors.py + group_analysis.py</span><br>
+        同產業比較，外資最愛誰就買誰。直接排出第一名，不用自己猜。
+      </div>
+      <div class="output-preview">
+        📤 預期輸出：<strong>「第一名：日月光 3711（外資淨買超 46,535 張）。第二名：京元電 2449。第三名：力成 6239（淨賣超 26,865 張）。→ 建議：買日月光，避開力成」</strong>
+      </div>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copy(this)">複製</button>
+        請比較封測產業三檔股票【2449】、【3711】、【6239】最近兩個月的外資買賣超。
+        1. 列出每檔的總買超/賣超張數、日均買超、最大單日買超
+        2. 用同業相對 z-score（cross-sectional）找出誰有「單獨異常」買賣
+        3. 排出外資最愛的第一名到第三名
+        最後給我結論：「買第一名」、「觀望」或「都不買」，只要一句話結論。
+        結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🏆</div>
+        <div class="card-title-area">
+          <div class="card-title">同產業誰有異常買點？</div>
+          <div class="card-subtitle">同業相對 z-score｜找出「單獨被買」的訊號</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        <span class="tag buy">獨家訊號</span>
+        <span class="tag module">institutional_investors.py</span><br>
+        進階用法：同業都在賣，只有某一檔被異常買 → 這檔可能有內部利多。這是「相對強勢」的買點。
+      </div>
+      <div class="output-preview">
+        📤 預期輸出：<strong>「同業都在淨賣超，但 2449 在 5/15 單獨異常買超 z=3.95。這是『相對強勢』訊號。→ 建議：買 2449」</strong>
+      </div>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copy(this)">複製</button>
+        請分析封測產業【2449】、【3711】、【6239】最近兩個月，找出「同業相對異常買點」：
+        1. 逐日計算三檔的同業均值和標準差
+        2. 找出「同業在賣、但這檔異常大買」的日子（sector z-score > 1.5）
+        3. 這種「單獨被買」的訊號通常代表什麼？
+        最後給我結論：哪一檔有這種訊號、該不該買。
+        結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
+      </div>
+    </div>
+
+  </div>
+<div id="event" class="section">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📅</div>
+        <div class="card-title-area">
+          <div class="card-title">營收公佈後能不能買？</div>
+          <div class="card-subtitle">事件研究法｜營收公佈前後 10 天 CAR 分析</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        <span class="tag wait">事件訊號</span>
+        <span class="tag module">main_event_study.py + scenarios.py (場景一)</span><br>
+        學術級分析：營收公佈前後股價怎麼動？如果歷史顯示「公佈後 3 天平均漲 5%」，那公佈當天就是買點。
+      </div>
+      <div class="output-preview">
+        📤 預期輸出：<strong>「過去 8 次營收公佈，公佈後 3 天平均漲 3.2%，勝率 75%。但公佈前 5 天已漲 2%（可能已反應）。→ 建議：公佈當天早上買進，持有一週」</strong>
+      </div>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copy(this)">複製</button>
+        請對【2449】做「營收公佈事件研究」：
+        1. 找出最近 8 次營收公佈日（每月 10 日）
+        2. 分析公佈前 5 天和公佈後 5 天的股價變化（平均漲跌、勝率）
+        3. 檢查公佈前外資有沒有提前買超（資訊洩漏跡象）
+        4. 如果營收年增率 > 5% 和 < -5%，分開看股價反應有沒有不同
+        最後給我結論：「下次營收公佈前/後該不該買」、「什麼條件下買勝率最高」。
+        結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🕵️</div>
+        <div class="card-title-area">
+          <div class="card-title">有沒有人提前知道營收？</div>
+          <div class="card-subtitle">資訊洩漏檢測｜營收公佈前異常買超</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        <span class="tag sell">避險訊號</span>
+        <span class="tag module">main_event_study.py + scenarios.py (場景二)</span><br>
+        如果營收公佈前外資就異常大買，代表有人偷跑。這種股票「公佈後反而可能跌」（利多出盡）。
+      </div>
+      <div class="output-preview">
+        📤 預期輸出：<strong>「營收公佈前 5 天，外資異常買超 z=2.8。營收公佈後股價反而跌 2%。這是『利多出盡』模式。→ 建議：不要追漲，等拉回」</strong>
+      </div>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copy(this)">複製</button>
+        請檢測【2449】最近 4 次營收公佈有沒有「資訊洩漏」跡象：
+        1. 每次營收公佈前 5 天，外資有沒有異常買超（z-score > 2）
+        2. 如果有提前買超，營收公佈後股價是漲還是跌？
+        3. 統計「提前買超」次數和「公佈後漲跌」的關係
+        最後給我結論：「這檔股票有沒有內線交易跡象」、「我該不該在營收公佈前進場」。
+        結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📦</div>
+        <div class="card-title-area">
+          <div class="card-title">高股息 ETF 現在買哪一檔？</div>
+          <div class="card-subtitle">ETF 版｜外資 + 殖利率 + 股價位置</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        <span class="tag buy">存股訊號</span>
+        <span class="tag module">institutional_investors.py (ETF 版)</span><br>
+        不選個股，選 ETF。外資 + 殖利率 + 股價位置，三個條件選出最適合現在買的高股息 ETF。
+      </div>
+      <div class="output-preview">
+        📤 預期輸出：<strong>「00919 殖利率 9.2% 最高，但外資連續賣超。00878 殖利率 6.5%，外資穩定買超。→ 建議：買 00878，穩定領息」</strong>
+      </div>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copy(this)">複製</button>
+        請比較【0056】、【00878】、【00919】、【00929】這四檔高股息 ETF，幫我選一檔現在買進。只看三個條件：
+        1. 最近一個月外資買賣超誰最強
+        2. 殖利率誰最高
+        3. 現在股價離 52 週高點還有多少空間（還沒漲太多的比較安全）
+        最後給我結論：「買這一檔」，並說明為什麼不買其他三檔。
+        結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 模組對照 -->
+  <div id="module" class="section">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📋</div>
+        <div class="card-title-area">
+          <div class="card-title">提示詞 ↔ Python 模組對照表</div>
+          <div class="card-subtitle">每一組都對應石頭哥的分析程式</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        這張表讓你知道：當你在 ChatGPT 貼上提示詞時，背後對應的是哪一支 Python 腳本、哪個函數、哪個資料來源。
+      </div>
+      <table class="module-table">
+        <tr>
+          <th>網頁提示詞</th>
+          <th>Python 檔案</th>
+          <th>函數/方法</th>
+          <th>資料來源</th>
+        </tr>
+        <tr>
+          <td>外資有沒有偷偷買？</td>
+          <td>institutional_investors.py</td>
+          <td>three_segment_zscore()</td>
+          <td>T86 API</td>
+        </tr>
+        <tr>
+          <td>這檔現在能進場嗎？</td>
+          <td>institutional_investors.py + event_study_core.py</td>
+          <td>外資 10 日均 + 投信 10 日均 + 股價均線</td>
+          <td>T86 + Yahoo</td>
+        </tr>
+        <tr>
+          <td>外資是不是在倒貨？</td>
+          <td>institutional_investors.py</td>
+          <td>three_segment_zscore() 反向</td>
+          <td>T86 API</td>
+        </tr>
+        <tr>
+          <td>封測三雄誰被買最多？</td>
+          <td>institutional_investors.py + group_analysis.py</td>
+          <td>同業批次分析 + cross_sectional_zscore()</td>
+          <td>T86 API</td>
+        </tr>
+        <tr>
+          <td>同業誰有異常買點？</td>
+          <td>institutional_investors.py</td>
+          <td>cross_sectional_zscore()</td>
+          <td>T86 API</td>
+        </tr>
+        <tr>
+          <td>營收公佈後能不能買？</td>
+          <td>main_event_study.py + scenarios.py</td>
+          <td>scenario_1_post_announcement_strategy()</td>
+          <td>MOPS + Yahoo</td>
+        </tr>
+        <tr>
+          <td>有沒有人提前知道營收？</td>
+          <td>main_event_study.py + scenarios.py</td>
+          <td>scenario_2_information_leakage()</td>
+          <td>MOPS + Yahoo</td>
+        </tr>
+        <tr>
+          <td>高股息 ETF 買哪一檔？</td>
+          <td>institutional_investors.py (ETF)</td>
+          <td>外資買超 + 殖利率 + 52 週高點</td>
+          <td>T86 + Yahoo</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="divider"></div>
+  <p>石頭哥股票雷達 v1.0｜模組：institutional_investors.py + main_event_study.py</p>
+  <p style="margin-top:4px;">⚠️ 所有分析僅供參考，不構成投資建議｜下單前請確認即時行情</p>
+</div>
+
+<div class="toast" id="toast">✅ 已複製到剪貼簿</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+function copy(btn) {
+  const text = btn.parentElement.innerText.replace('複製', '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.innerText = '✓ 已複';
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerText = '複製';
+      toast.classList.remove('show');
+    }, 2000);
+  }).catch(() => {
+    const range = document.createRange();
+    range.selectNode(btn.parentElement);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    alert('請長按文字選取，然後複製');
+  });
+}
+</script>
+
+</body>
+</html>
