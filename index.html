@@ -474,23 +474,23 @@
       <div class="card-header">
         <div class="card-icon">🕵️</div>
         <div class="card-title-area">
-          <div class="card-title">有沒有人提前知道營收？</div>
-          <div class="card-subtitle">資訊洩漏檢測｜營收公佈前異常買超</div>
+          <div class="card-title">大家是否提前預期營收？</div>
+          <div class="card-subtitle">市場預期檢測｜營收公佈前異常買超</div>
         </div>
       </div>
       <div class="card-desc">
         <span class="tag sell">避險訊號</span>
         <span class="tag module">main_event_study.py + scenarios.py (場景二)</span><br>
-        如果營收公佈前外資就異常大買，代表有人偷跑。這種股票「公佈後反而可能跌」（利多出盡）。
+        如果營收公佈前市場就已明顯反應，代表預期可能先走在前面。這種股票公佈後不一定還會延續。
       </div>
       <div class="output-preview">
-        📤 預期輸出：<strong>「前窗 T-10~T-1 外資已異常買超，顯示訊息可能先被反應；後窗 T+1~T+10 沒有延續。→ 建議：避免事件前追價」</strong>
+        📤 預期輸出：<strong>「前窗 T-10~T-1 已先反應市場預期，後窗 T+1~T+10 沒有明顯延續。→ 建議：避免事件前追價」</strong>
       </div>
       <div class="prompt-box">
         <button class="copy-btn" onclick="copy(this)">複製</button>
-        請檢測【2449】最近 4 次營收公佈有沒有「資訊洩漏」跡象：
+        請檢測【2449】最近 4 次營收公佈是否已被市場提前預期：
         1. 每次營收公佈前 10 天，外資有沒有異常買超（z-score > 2）
-        2. 如果前窗已有提前買超，營收公佈後 10 天還有沒有延續？
+        2. 如果前窗已有提前反應，營收公佈後 10 天還有沒有延續？
         3. 統計前窗 / 後窗 的 CAR 與勝率關係
         最後給我結論：「這檔股票有沒有提前反應」、「我該不該在營收公佈前進場」。
         結尾加一句：「⚠️ 以上分析僅供參考，不構成投資建議」
@@ -583,7 +583,7 @@
           <td>MOPS + Yahoo</td>
         </tr>
         <tr>
-          <td>有沒有人提前知道營收？</td>
+          <td>大家是否提前預期營收？</td>
           <td>main_event_study.py + scenarios.py</td>
           <td>scenario_2_information_leakage()</td>
           <td>MOPS + Yahoo</td>
