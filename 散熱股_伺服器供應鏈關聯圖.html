@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>散熱股 + 伺服器供應鏈關聯圖</title>
+  <style>
+    :root{
+      --bg:#020617; --panel:#0f172a; --panel2:#111827; --line:#1f2937;
+      --text:#e5e7eb; --muted:#94a3b8; --cyan:#22d3ee; --emerald:#34d399;
+      --violet:#a78bfa; --amber:#fbbf24; --rose:#fb7185; --orange:#fb923c;
+      --slate:#64748b; --white:#fff; --grid:#1e293b;
+    }
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans TC',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+    .wrap{max-width:1440px;margin:0 auto;padding:24px 18px 28px;}
+    .header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;}
+    h1{margin:0;font-size:28px;line-height:1.15;font-weight:900;letter-spacing:.4px;}
+    .sub{color:var(--muted);font-size:13px;margin-top:8px;max-width:980px;line-height:1.6}
+    .pulse{display:inline-block;width:10px;height:10px;border-radius:999px;background:var(--emerald);box-shadow:0 0 0 0 rgba(52,211,153,.7);animation:pulse 1.8s infinite;vertical-align:middle;margin-right:8px}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.7)}70%{box-shadow:0 0 0 12px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+    .card{background:linear-gradient(180deg,rgba(15,23,42,.92),rgba(17,24,39,.94));border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 40px rgba(0,0,0,.35);overflow:hidden}
+    .svgbox{padding:14px}
+    svg{width:100%;height:auto;display:block;background:linear-gradient(180deg,rgba(2,6,23,.95),rgba(2,6,23,1));border-radius:14px}
+    .legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+    .legend .item{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.4}
+    .dot{display:inline-block;width:9px;height:9px;border-radius:999px;margin-right:8px;vertical-align:middle}
+    .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
+    .info{padding:14px 16px}
+    .info h2{margin:0 0 8px;font-size:16px}
+    .info ul{margin:8px 0 0 18px;padding:0;color:var(--text)}
+    .info li{margin:6px 0;line-height:1.5}
+    .tag{display:inline-block;font:600 11px/1 'JetBrains Mono',monospace;padding:4px 8px;border-radius:999px;margin-right:6px;letter-spacing:.3px}
+    .tag.cyan{background:rgba(34,211,238,.16);color:var(--cyan);border:1px solid rgba(34,211,238,.3)}
+    .tag.em{background:rgba(52,211,153,.14);color:var(--emerald);border:1px solid rgba(52,211,153,.28)}
+    .tag.vi{background:rgba(167,139,250,.14);color:var(--violet);border:1px solid rgba(167,139,250,.28)}
+    .tag.am{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
+    .tag.ro{background:rgba(251,113,133,.12);color:var(--rose);border:1px solid rgba(251,113,133,.25)}
+    .note{font-size:12px;color:var(--muted);line-height:1.6}
+    .small{font-size:12px;color:var(--muted)}
+    .foot{margin-top:10px;color:var(--muted);font-size:11px}
+    .box-title{font-size:14px;font-weight:800;fill:#e5e7eb}
+    .box-sub{font-size:10px;fill:#cbd5e1}
+    .node{filter:drop-shadow(0 8px 18px rgba(0,0,0,.28))}
+    .edge{fill:none;stroke-width:2.2;opacity:.95;stroke-linecap:round;stroke-linejoin:round}
+    .edge-dashed{stroke-dasharray:6 5}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <h1><span class="pulse"></span>散熱股 + 伺服器供應鏈關聯圖</h1>
+      <div class="sub">以你剛剛追蹤的主動型 ETF 持股為起點，將「散熱族群」放入 AI 伺服器供應鏈脈絡中，方便看出哪些股票同時屬於散熱、PCB/載板、測試、封裝與伺服器機構件等關鍵環節。此圖為<b>產業關係示意</b>，非正式投資建議。</div>
+    </div>
+    <div class="small" style="text-align:right">
+      資料視角：<br>主動型 ETF 持股快照 + 供應鏈分類
+    </div>
+  </div>
+
+  <div class="card svgbox">
+<svg viewBox="0 0 1440 930" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="散熱股與伺服器供應鏈關聯圖">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow-cyan" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrow-emerald" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrow-violet" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#a78bfa"/>
+    </marker>
+    <marker id="arrow-amber" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrow-rose" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#fb7185"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1440" height="930" fill="#020617"/>
+  <rect x="0" y="0" width="1440" height="930" fill="url(#grid)" opacity="0.75"/>
+
+  <!-- Left cluster: ETF exposure -->
+  <g class="node">
+    <rect x="46" y="70" width="290" height="180" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="46" y="70" width="290" height="180" rx="16" fill="rgba(8,51,68,.28)" stroke="none"/>
+    <text x="66" y="102" class="box-title">主動型 ETF 持股視角</text>
+    <text x="66" y="132" class="box-sub">散熱/伺服器供應鏈相關持股</text>
+    <text x="66" y="165" fill="#e5e7eb" font-size="12">00981A：奇鋐 4.84%、健策 2.62%</text>
+    <text x="66" y="189" fill="#e5e7eb" font-size="12">00982A：奇鋐 2.04%、高力 0.94%</text>
+    <text x="66" y="213" fill="#e5e7eb" font-size="12">00980A：奇鋐 2.03%、健策 2.97%、高力 1.77%</text>
+    <text x="66" y="240" fill="#94a3b8" font-size="10">註：此圖聚焦散熱族群與伺服器供應鏈的關聯，不等於完整持股清單。</text>
+  </g>
+
+  <!-- Server chain core -->
+  <g class="node">
+    <rect x="425" y="70" width="320" height="95" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.6"/>
+    <rect x="425" y="70" width="320" height="95" rx="16" fill="rgba(6,78,59,.26)"/>
+    <text x="448" y="108" class="box-title">AI 伺服器 / OEM / ODM</text>
+    <text x="448" y="137" class="box-sub">雲端伺服器、AI Server、機櫃整機組裝</text>
+  </g>
+
+  <g class="node">
+    <rect x="425" y="212" width="320" height="95" rx="16" fill="#0f172a" stroke="#a78bfa" stroke-width="1.6"/>
+    <rect x="425" y="212" width="320" height="95" rx="16" fill="rgba(76,29,149,.24)"/>
+    <text x="448" y="249" class="box-title">PCB / 載板 / 連接</text>
+    <text x="448" y="278" class="box-sub">高速傳輸、載板、散熱板、訊號互連</text>
+  </g>
+
+  <g class="node">
+    <rect x="425" y="354" width="320" height="95" rx="16" fill="#0f172a" stroke="#fbbf24" stroke-width="1.6"/>
+    <rect x="425" y="354" width="320" height="95" rx="16" fill="rgba(120,53,15,.23)"/>
+    <text x="448" y="391" class="box-title">IC 設計 / ASIC / 驗證</text>
+    <text x="448" y="420" class="box-sub">CPU、GPU、ASIC、測試與驗證平台</text>
+  </g>
+
+  <g class="node">
+    <rect x="425" y="496" width="320" height="95" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.6"/>
+    <rect x="425" y="496" width="320" height="95" rx="16" fill="rgba(6,78,59,.24)"/>
+    <text x="448" y="533" class="box-title">封裝 / 測試 / 驗證</text>
+    <text x="448" y="562" class="box-sub">CoWoS、封測、探針卡、測試介面</text>
+  </g>
+
+  <g class="node">
+    <rect x="425" y="638" width="320" height="95" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="425" y="638" width="320" height="95" rx="16" fill="rgba(8,51,68,.24)"/>
+    <text x="448" y="675" class="box-title">散熱模組 / 水冷 / 熱管理</text>
+    <text x="448" y="704" class="box-sub">風冷、均熱板、熱導管、水冷板、熱處理</text>
+  </g>
+
+  <!-- Right cluster: stocks -->
+  <g class="node">
+    <rect x="820" y="62" width="250" height="90" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="820" y="62" width="250" height="90" rx="16" fill="rgba(8,51,68,.24)"/>
+    <text x="844" y="98" class="box-title">奇鋐 3017</text>
+    <text x="844" y="124" class="box-sub">伺服器散熱 / 水冷</text>
+  </g>
+  <g class="node">
+    <rect x="1100" y="62" width="250" height="90" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="1100" y="62" width="250" height="90" rx="16" fill="rgba(8,51,68,.24)"/>
+    <text x="1124" y="98" class="box-title">健策 3653</text>
+    <text x="1124" y="124" class="box-sub">均熱片 / 熱管理</text>
+  </g>
+  <g class="node">
+    <rect x="820" y="188" width="250" height="90" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="820" y="188" width="250" height="90" rx="16" fill="rgba(8,51,68,.24)"/>
+    <text x="844" y="224" class="box-title">高力 8996</text>
+    <text x="844" y="250" class="box-sub">熱交換 / 熱處理</text>
+  </g>
+
+  <g class="node">
+    <rect x="1100" y="188" width="250" height="90" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.6"/>
+    <rect x="1100" y="188" width="250" height="90" rx="16" fill="rgba(6,78,59,.22)"/>
+    <text x="1124" y="224" class="box-title">廣達 2382</text>
+    <text x="1124" y="250" class="box-sub">AI 伺服器 ODM</text>
+  </g>
+
+  <g class="node">
+    <rect x="820" y="314" width="250" height="90" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.6"/>
+    <rect x="820" y="314" width="250" height="90" rx="16" fill="rgba(6,78,59,.22)"/>
+    <text x="844" y="350" class="box-title">鴻海 2317</text>
+    <text x="844" y="376" class="box-sub">伺服器整機 / 機構件</text>
+  </g>
+  <g class="node">
+    <rect x="1100" y="314" width="250" height="90" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.6"/>
+    <rect x="1100" y="314" width="250" height="90" rx="16" fill="rgba(6,78,59,.22)"/>
+    <text x="1124" y="350" class="box-title">緯穎 6669</text>
+    <text x="1124" y="376" class="box-sub">雲端伺服器 OEM/ODM</text>
+  </g>
+
+  <g class="node">
+    <rect x="820" y="440" width="250" height="90" rx="16" fill="#0f172a" stroke="#a78bfa" stroke-width="1.6"/>
+    <rect x="820" y="440" width="250" height="90" rx="16" fill="rgba(76,29,149,.22)"/>
+    <text x="844" y="476" class="box-title">台積電 2330</text>
+    <text x="844" y="502" class="box-sub">晶圓代工 / AI 晶片製程</text>
+  </g>
+  <g class="node">
+    <rect x="1100" y="440" width="250" height="90" rx="16" fill="#0f172a" stroke="#a78bfa" stroke-width="1.6"/>
+    <rect x="1100" y="440" width="250" height="90" rx="16" fill="rgba(76,29,149,.22)"/>
+    <text x="1124" y="476" class="box-title">聯發科 2454</text>
+    <text x="1124" y="502" class="box-sub">IC 設計 / 邊緣運算</text>
+  </g>
+
+  <g class="node">
+    <rect x="820" y="566" width="250" height="90" rx="16" fill="#0f172a" stroke="#a78bfa" stroke-width="1.6"/>
+    <rect x="820" y="566" width="250" height="90" rx="16" fill="rgba(76,29,149,.22)"/>
+    <text x="844" y="602" class="box-title">旺矽 6223</text>
+    <text x="844" y="628" class="box-sub">探針卡 / 測試設備</text>
+  </g>
+  <g class="node">
+    <rect x="1100" y="566" width="250" height="90" rx="16" fill="#0f172a" stroke="#a78bfa" stroke-width="1.6"/>
+    <rect x="1100" y="566" width="250" height="90" rx="16" fill="rgba(76,29,149,.22)"/>
+    <text x="1124" y="602" class="box-title">穎崴 6515</text>
+    <text x="1124" y="628" class="box-sub">測試介面 / 探針測試</text>
+  </g>
+
+  <g class="node">
+    <rect x="820" y="692" width="250" height="90" rx="16" fill="#0f172a" stroke="#fbbf24" stroke-width="1.6"/>
+    <rect x="820" y="692" width="250" height="90" rx="16" fill="rgba(120,53,15,.22)"/>
+    <text x="844" y="728" class="box-title">欣興 3037</text>
+    <text x="844" y="754" class="box-sub">ABF 載板 / PCB</text>
+  </g>
+  <g class="node">
+    <rect x="1100" y="692" width="250" height="90" rx="16" fill="#0f172a" stroke="#fbbf24" stroke-width="1.6"/>
+    <rect x="1100" y="692" width="250" height="90" rx="16" fill="rgba(120,53,15,.22)"/>
+    <text x="1124" y="728" class="box-title">南電 8046</text>
+    <text x="1124" y="754" class="box-sub">ABF 載板 / 封裝材料</text>
+  </g>
+
+  <!-- edges (drawn early / behind boxes) -->
+  <path class="edge" d="M336 160 C 395 160, 385 110, 425 110" stroke="#22d3ee" marker-end="url(#arrow-cyan)"/>
+  <path class="edge" d="M336 190 C 395 190, 385 250, 425 250" stroke="#a78bfa" marker-end="url(#arrow-violet)"/>
+  <path class="edge" d="M336 220 C 395 220, 385 690, 425 690" stroke="#22d3ee" marker-end="url(#arrow-cyan)"/>
+
+  <path class="edge" d="M745 112 C 790 112, 790 106, 820 106" stroke="#34d399" marker-end="url(#arrow-emerald)"/>
+  <path class="edge" d="M745 134 C 815 136, 980 134, 1100 106" stroke="#34d399" marker-end="url(#arrow-emerald)"/>
+
+  <path class="edge" d="M745 250 C 805 250, 790 232, 820 232" stroke="#a78bfa" marker-end="url(#arrow-violet)"/>
+  <path class="edge" d="M745 272 C 840 272, 980 232, 1100 232" stroke="#a78bfa" marker-end="url(#arrow-violet)"/>
+
+  <path class="edge" d="M745 392 C 805 392, 790 476, 820 476" stroke="#fbbf24" marker-end="url(#arrow-amber)"/>
+  <path class="edge" d="M745 414 C 845 414, 990 476, 1100 476" stroke="#fbbf24" marker-end="url(#arrow-amber)"/>
+
+  <path class="edge" d="M745 534 C 805 534, 790 602, 820 602" stroke="#34d399" marker-end="url(#arrow-emerald)"/>
+  <path class="edge" d="M745 556 C 845 556, 980 602, 1100 602" stroke="#34d399" marker-end="url(#arrow-emerald)"/>
+
+  <path class="edge" d="M745 678 C 805 678, 790 738, 820 738" stroke="#22d3ee" marker-end="url(#arrow-cyan)"/>
+  <path class="edge" d="M745 700 C 845 700, 980 738, 1100 738" stroke="#22d3ee" marker-end="url(#arrow-cyan)"/>
+
+  <!-- relation hints -->
+  <g opacity="0.95">
+    <text x="365" y="86" fill="#94a3b8" font-size="10">供應鏈主幹</text>
+    <text x="1016" y="48" fill="#94a3b8" font-size="10">ETF 持股中可見的散熱/伺服器相關標的</text>
+    <text x="1022" y="848" fill="#94a3b8" font-size="10">藍＝散熱｜綠＝伺服器 ODM/OEM｜紫＝晶片/測試｜黃＝載板/PCB</text>
+  </g>
+</svg>
+  </div>
+
+  <div class="grid2">
+    <div class="card info">
+      <h2>這張圖怎麼看</h2>
+      <div class="note">
+        這不是單純的「散熱股清單」，而是把散熱股放進 AI 伺服器鏈條裡看：<br>
+        <span class="tag cyan">散熱</span> → <span class="tag em">伺服器整機/ODM</span> → <span class="tag vi">晶片/測試</span> → <span class="tag am">載板/PCB</span>
+      </div>
+      <ul>
+        <li><b>奇鋐 / 健策 / 高力</b>：散熱族群核心，直接受 AI Server 熱密度提升帶動。</li>
+        <li><b>廣達 / 鴻海 / 緯穎</b>：伺服器整機與 ODM/OEM，決定散熱方案導入需求。</li>
+        <li><b>台積電 / 聯發科 / 旺矽 / 穎崴</b>：晶片與測試環節，屬算力與驗證需求來源。</li>
+        <li><b>欣興 / 南電</b>：ABF 載板與 PCB，與高速運算平台同步受惠。</li>
+      </ul>
+    </div>
+    <div class="card info">
+      <h2>ETF 持股提示</h2>
+      <div class="note">
+        你前面查到的主動型 ETF 中，散熱股的曝光點如下：
+      </div>
+      <ul>
+        <li><b>00981A</b>：奇鋐 4.84%、健策 2.62%、高力 0.00%</li>
+        <li><b>00982A</b>：奇鋐 2.0412%、高力 0.9428%</li>
+        <li><b>00980A</b>：奇鋐 2.03%、健策 2.97%、高力 1.77%</li>
+      </ul>
+      <div class="foot">如果你要，我可以下一步把這張圖再升級成「*散熱股 × AI 伺服器供應鏈雷達圖*」或輸出成 PNG 簡報版。</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
